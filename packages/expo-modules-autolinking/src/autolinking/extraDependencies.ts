@@ -1,7 +1,4 @@
 import { getConfig } from '@expo/config';
-import path from 'path';
-
-import { projectPackageJsonPath } from './mergeLinkingOptions';
 
 interface AndroidMavenRepository {
   url: string;
@@ -30,8 +27,7 @@ interface ExtraDependencies {
 /**
  * Gets the `expo-build-properties` settings from the app config.
  */
-export async function getBuildPropertiesAsync(): Promise<Record<string, any>> {
-  const projectRoot = path.dirname(projectPackageJsonPath);
+export async function getBuildPropertiesAsync(projectRoot: string): Promise<Record<string, any>> {
   const { exp: config } = await getConfig(projectRoot, { skipSDKVersionRequirement: true });
   const buildPropertiesPlugin = config.plugins?.find(
     (item) => item[0] === 'expo-build-properties'
@@ -42,8 +38,10 @@ export async function getBuildPropertiesAsync(): Promise<Record<string, any>> {
 /**
  * Resolves the extra dependencies from `expo-build-properties` settings.
  */
-export async function resolveExtraDependenciesAsync(): Promise<Partial<ExtraDependencies>> {
-  const buildProps = await getBuildPropertiesAsync();
+export async function resolveExtraDependenciesAsync(
+  projectRoot: string
+): Promise<Partial<ExtraDependencies>> {
+  const buildProps = await getBuildPropertiesAsync(projectRoot);
   return {
     androidMavenRepos: buildProps.android?.extraMavenRepos ?? [],
     iosPods: buildProps.ios?.extraPods ?? {},

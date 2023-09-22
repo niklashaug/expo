@@ -2,8 +2,8 @@
   "name": "expo-modules-autolinking",
   "version": "1.6.0",
   "description": "Scripts that autolink Expo modules.",
-  "main": "build/index.js",
-  "types": "build/index.d.ts",
+  "main": "build/autolinking/index.js",
+  "types": "build/autolinking/index.d.ts",
   "scripts": {
     "build": "expo-module build",
     "clean": "expo-module clean",

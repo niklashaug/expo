@@ -17,7 +17,7 @@ describe(getBuildPropertiesAsync, () => {
         plugins: [],
       },
     });
-    expect(await getBuildPropertiesAsync()).toEqual({});
+    expect(await getBuildPropertiesAsync('/app')).toEqual({});
 
     (getConfig as jest.MockedFunction<typeof getConfig>).mockReturnValueOnce({
       ...defaultConfig,
@@ -26,7 +26,7 @@ describe(getBuildPropertiesAsync, () => {
         plugins: ['test-plugin'],
       },
     });
-    expect(await getBuildPropertiesAsync()).toEqual({});
+    expect(await getBuildPropertiesAsync('/app')).toEqual({});
   });
 
   it('should return empty object when expo-build-properties has no options', async () => {
@@ -37,7 +37,7 @@ describe(getBuildPropertiesAsync, () => {
         plugins: [['expo-build-properties']],
       },
     });
-    expect(await getBuildPropertiesAsync()).toEqual({});
+    expect(await getBuildPropertiesAsync('/app')).toEqual({});
   });
 
   it('should return the `iosPods` array', async () => {
@@ -48,7 +48,7 @@ describe(getBuildPropertiesAsync, () => {
         plugins: [['expo-build-properties', { hello: 'world' }]],
       },
     });
-    expect(await getBuildPropertiesAsync()).toEqual({ hello: 'world' });
+    expect(await getBuildPropertiesAsync('/app')).toEqual({ hello: 'world' });
   });
 });
 
@@ -69,7 +69,7 @@ describe(resolveExtraDependenciesAsync, () => {
         ],
       },
     });
-    expect(await resolveExtraDependenciesAsync()).toMatchInlineSnapshot(`
+    expect(await resolveExtraDependenciesAsync('/app')).toMatchInlineSnapshot(`
       {
         "androidMavenRepos": [
           "https://customers.pspdfkit.com/maven/",
@@ -90,7 +90,7 @@ describe(resolveExtraDependenciesAsync, () => {
         ...defaultConfig.exp,
       },
     });
-    expect(await resolveExtraDependenciesAsync()).toMatchInlineSnapshot(`
+    expect(await resolveExtraDependenciesAsync('/app')).toMatchInlineSnapshot(`
       {
         "androidMavenRepos": [],
         "iosPods": {},
