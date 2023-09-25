@@ -133,7 +133,6 @@ function getNavigateAction(state) {
     };
 }
 function getNavigatePushAction(desiredState, navigationState) {
-    debugger;
     const sharedParents = getSharedNavigators(desiredState, navigationState, false);
     if (sharedParents && sharedParents.at(-1)?.type === 'stack') {
         const { screen, params } = rewriteNavigationStateToParams(desiredState);
