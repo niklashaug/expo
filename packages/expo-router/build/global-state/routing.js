@@ -23,7 +23,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.linkTo = exports.setParams = exports.canGoBack = exports.goBack = exports.replace = exports.push = void 0;
+exports.linkTo = exports.setParams = exports.canGoBack = exports.goBack = exports.replace = exports.push = exports.navigate = void 0;
 const Linking = __importStar(require("expo-linking"));
 const href_1 = require("../link/href");
 const path_1 = require("../link/path");
@@ -33,8 +33,12 @@ function assertIsReady(store) {
         throw new Error('Attempted to navigate before mounting the Root Layout component. Ensure the Root Layout component is rendering a Slot, or other navigator on the first render.');
     }
 }
-function push(url) {
+function navigate(url) {
     return this.linkTo((0, href_1.resolveHref)(url));
+}
+exports.navigate = navigate;
+function push(url) {
+    return this.linkTo((0, href_1.resolveHref)(url), 'PUSH');
 }
 exports.push = push;
 function replace(url) {
@@ -98,8 +102,10 @@ function linkTo(href, event) {
     switch (event) {
         case 'REPLACE':
             return navigationRef.dispatch(getNavigateReplaceAction(state, navigationRef.getRootState()));
+        case 'PUSH':
+            return navigationRef.dispatch(getNavigatePushAction(state, navigationRef.getRootState()));
         default:
-            return navigationRef.dispatch(getNavigatePushAction(state));
+            return navigationRef.dispatch(getNavigateAction(state));
     }
 }
 exports.linkTo = linkTo;
@@ -116,7 +122,7 @@ function rewriteNavigationStateToParams(state, params = {}) {
     }
     return JSON.parse(JSON.stringify(params));
 }
-function getNavigatePushAction(state) {
+function getNavigateAction(state) {
     const { screen, params } = rewriteNavigationStateToParams(state);
     return {
         type: 'NAVIGATE',
@@ -126,21 +132,30 @@ function getNavigatePushAction(state) {
         },
     };
 }
-function getNavigateReplaceAction(previousState, parentState, lastNavigatorSupportingReplace = parentState) {
-    // We should always have at least one route in the state
-    const state = previousState.routes.at(-1);
-    // Only these navigators support replace
-    if (parentState.type === 'stack' || parentState.type === 'tab') {
-        lastNavigatorSupportingReplace = parentState;
+function getNavigatePushAction(desiredState, navigationState) {
+    debugger;
+    const sharedParents = getSharedNavigators(desiredState, navigationState, false);
+    if (sharedParents && sharedParents.at(-1)?.type === 'stack') {
+        const { screen, params } = rewriteNavigationStateToParams(desiredState);
+        return {
+            type: 'PUSH',
+            payload: {
+                name: screen,
+                params,
+            },
+        };
     }
-    const currentRoute = parentState.routes.find((route) => route.name === state.name);
-    const routesAreEqual = parentState.routes[parentState.index] === currentRoute;
-    // If there is nested state and the routes are equal, we should keep going down the tree
-    if (state.state && routesAreEqual && currentRoute.state) {
-        return getNavigateReplaceAction(state.state, currentRoute.state, lastNavigatorSupportingReplace);
+    else {
+        return getNavigateAction(desiredState);
     }
-    // Either we reached the bottom of the state or the point where the routes diverged
-    const { screen, params } = rewriteNavigationStateToParams(previousState);
+}
+function getNavigateReplaceAction(desiredState, navigationState) {
+    const sharedParents = getSharedNavigators(desiredState, navigationState);
+    const lastNavigatorSupportingReplace = sharedParents?.findLast((parent) => parent.type === 'stack' || parent.type === 'tab') ?? -1;
+    if (lastNavigatorSupportingReplace === -1) {
+        throw new Error();
+    }
+    const { screen, params } = rewriteNavigationStateToParams(desiredState);
     return {
         type: lastNavigatorSupportingReplace.type === 'stack' ? 'REPLACE' : 'JUMP_TO',
         payload: {
@@ -150,5 +165,22 @@ function getNavigateReplaceAction(previousState, parentState, lastNavigatorSuppo
             source: lastNavigatorSupportingReplace?.key,
         },
     };
+}
+function getSharedNavigators(left, right, allowPartial = true, shared = []) {
+    shared.push(right);
+    const leftRoute = left.routes.at(-1);
+    const matchedRoute = right.routes.find((route) => route.name === leftRoute.name);
+    const routesShareNavigator = right.routes[right.index] === matchedRoute;
+    if (routesShareNavigator && leftRoute.state && matchedRoute.state) {
+        return getSharedNavigators(leftRoute.state, matchedRoute.state, allowPartial, shared);
+    }
+    const isPartialMatch = shared.length > 1 || leftRoute.state || matchedRoute?.state;
+    if (allowPartial && isPartialMatch) {
+        return shared;
+    }
+    else if (!isPartialMatch) {
+        return shared;
+    }
+    return undefined;
 }
 //# sourceMappingURL=routing.js.map

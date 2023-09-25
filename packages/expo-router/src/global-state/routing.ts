@@ -15,8 +15,12 @@ function assertIsReady(store: RouterStore) {
   }
 }
 
-export function push(this: RouterStore, url: Href) {
+export function navigate(this: RouterStore, url: Href) {
   return this.linkTo(resolveHref(url));
+}
+
+export function push(this: RouterStore, url: Href) {
+  return this.linkTo(resolveHref(url), 'PUSH');
 }
 
 export function replace(this: RouterStore, url: Href) {
@@ -92,8 +96,10 @@ export function linkTo(this: RouterStore, href: string, event?: string) {
   switch (event) {
     case 'REPLACE':
       return navigationRef.dispatch(getNavigateReplaceAction(state, navigationRef.getRootState()));
+    case 'PUSH':
+      return navigationRef.dispatch(getNavigatePushAction(state, navigationRef.getRootState()));
     default:
-      return navigationRef.dispatch(getNavigatePushAction(state));
+      return navigationRef.dispatch(getNavigateAction(state));
   }
 }
 
@@ -103,7 +109,7 @@ type NavigationParams = Partial<{
 }>;
 
 function rewriteNavigationStateToParams(
-  state?: { routes: ResultState['routes'] },
+  state?: { routes: ResultState['routes'] } | NavigationState,
   params: NavigationParams = {}
 ) {
   if (!state) return params;
@@ -119,8 +125,7 @@ function rewriteNavigationStateToParams(
 
   return JSON.parse(JSON.stringify(params));
 }
-
-function getNavigatePushAction(state: ResultState) {
+function getNavigateAction(state: ResultState) {
   const { screen, params } = rewriteNavigationStateToParams(state);
   return {
     type: 'NAVIGATE',
@@ -131,33 +136,38 @@ function getNavigatePushAction(state: ResultState) {
   };
 }
 
+function getNavigatePushAction(desiredState: ResultState, navigationState: NavigationState) {
+  debugger;
+  const sharedParents = getSharedNavigators(desiredState, navigationState, false);
+
+  if (sharedParents && sharedParents.at(-1)?.type === 'stack') {
+    const { screen, params } = rewriteNavigationStateToParams(desiredState);
+    return {
+      type: 'PUSH',
+      payload: {
+        name: screen,
+        params,
+      },
+    };
+  } else {
+    return getNavigateAction(desiredState);
+  }
+}
+
 function getNavigateReplaceAction(
-  previousState: ResultState,
-  parentState: NavigationState,
-  lastNavigatorSupportingReplace: NavigationState = parentState
+  desiredState: ResultState,
+  navigationState: NavigationState
 ): NavigationAction {
-  // We should always have at least one route in the state
-  const state = previousState.routes.at(-1)!;
+  const sharedParents = getSharedNavigators(desiredState, navigationState);
+  const lastNavigatorSupportingReplace =
+    sharedParents?.findLast((parent) => parent.type === 'stack' || parent.type === 'tab') ?? -1;
 
-  // Only these navigators support replace
-  if (parentState.type === 'stack' || parentState.type === 'tab') {
-    lastNavigatorSupportingReplace = parentState;
+  if (lastNavigatorSupportingReplace === -1) {
+    throw new Error();
   }
 
-  const currentRoute = parentState.routes.find((route) => route.name === state.name);
-  const routesAreEqual = parentState.routes[parentState.index] === currentRoute;
+  const { screen, params } = rewriteNavigationStateToParams(desiredState);
 
-  // If there is nested state and the routes are equal, we should keep going down the tree
-  if (state.state && routesAreEqual && currentRoute.state) {
-    return getNavigateReplaceAction(
-      state.state,
-      currentRoute.state as any,
-      lastNavigatorSupportingReplace
-    );
-  }
-
-  // Either we reached the bottom of the state or the point where the routes diverged
-  const { screen, params } = rewriteNavigationStateToParams(previousState);
   return {
     type: lastNavigatorSupportingReplace.type === 'stack' ? 'REPLACE' : 'JUMP_TO',
     payload: {
@@ -167,4 +177,36 @@ function getNavigateReplaceAction(
       source: lastNavigatorSupportingReplace?.key,
     },
   };
+}
+
+function getSharedNavigators(
+  left: ResultState,
+  right: NavigationState,
+  allowPartial = true,
+  shared: NavigationState[] = []
+) {
+  shared.push(right);
+
+  const leftRoute = left.routes.at(-1)!;
+  const matchedRoute = right.routes.find((route) => route.name === leftRoute.name);
+  const routesShareNavigator = right.routes[right.index] === matchedRoute;
+
+  if (routesShareNavigator && leftRoute.state && matchedRoute.state) {
+    return getSharedNavigators(
+      leftRoute.state,
+      matchedRoute.state as NavigationState,
+      allowPartial,
+      shared
+    );
+  }
+
+  const isPartialMatch = shared.length > 1 || leftRoute.state || matchedRoute?.state;
+
+  if (allowPartial && isPartialMatch) {
+    return shared;
+  } else if (!isPartialMatch) {
+    return shared;
+  }
+
+  return undefined;
 }

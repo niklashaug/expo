@@ -690,3 +690,28 @@ it('can push nested stacks with initial route names without creating circular re
   act(() => router.push('/menu/123'));
   expect(screen).toHavePathname('/menu/123');
 });
+
+it.only('can push the same route multiple times', () => {
+  renderRouter({
+    index: () => <Text testID="index" />,
+    test: () => <Text testID="test" />,
+  });
+
+  expect(screen).toHavePathname('/');
+  expect(screen.getByTestId('index')).toBeOnTheScreen();
+
+  // // If we push once and go back, we are back to index
+  act(() => router.push('/test'));
+  expect(screen.getByTestId('test')).toBeOnTheScreen();
+  act(() => router.back());
+  expect(screen.getByTestId('index')).toBeOnTheScreen();
+
+  // If we push twice we will need to go back twice
+  act(() => router.push('/test'));
+  act(() => router.push('/test'));
+  expect(screen.getByTestId('test')).toBeOnTheScreen();
+  act(() => router.back());
+  expect(screen.getByTestId('test')).toBeOnTheScreen();
+  act(() => router.back());
+  expect(screen.getByTestId('index')).toBeOnTheScreen();
+});
