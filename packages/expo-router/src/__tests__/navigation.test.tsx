@@ -691,7 +691,7 @@ it('can push nested stacks with initial route names without creating circular re
   expect(screen).toHavePathname('/menu/123');
 });
 
-it.only('can push the same route multiple times', () => {
+it('can push the same route multiple times', () => {
   renderRouter({
     index: () => <Text testID="index" />,
     test: () => <Text testID="test" />,
