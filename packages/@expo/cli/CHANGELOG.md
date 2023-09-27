@@ -19,7 +19,7 @@
 - Skip extraneous static HTML export in server mode. ([#24529](https://github.com/expo/expo/pull/24529) by [@EvanBacon](https://github.com/EvanBacon))
 - Remove `isCSSEnabled` flag from e2e tests ([#24489](https://github.com/expo/expo/pull/24489) by [@marklawlor](https://github.com/marklawlor))
 - Use Metro and web TypeScript types from `expo` instead of `expo-router`. ([#24255](https://github.com/expo/expo/pull/24255) by [@marklawlor](https://github.com/marklawlor))
-- Throw an error when bundling fails and try to output a more useful error message.
+- Throw an error when bundling fails and try to output a more useful error message. ([#24639](https://github.com/expo/expo/pull/24639) by [@alanjhughes](https://github.com/alanjhughes))
 
 ## 0.13.2 — 2023-09-18
 
