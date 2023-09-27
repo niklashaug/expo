@@ -3,6 +3,7 @@ import nock from 'nock';
 
 import { logEventAsync } from '../../../../utils/analytics/rudderstackClient';
 import { BundlerStartOptions } from '../../BundlerDevServer';
+import DevToolsPluginManager from '../../DevToolsPluginManager';
 import { getPlatformBundlers } from '../../platformBundlers';
 import { MetroBundlerDevServer, getDeepLinkHandler } from '../MetroBundlerDevServer';
 import { instantiateMetroAsync } from '../instantiateMetro';
@@ -34,7 +35,12 @@ beforeEach(() => {
 });
 
 async function getStartedDevServer(options: Partial<BundlerStartOptions> = {}) {
-  const devServer = new MetroBundlerDevServer('/', getPlatformBundlers({}), false);
+  const devServer = new MetroBundlerDevServer(
+    '/',
+    getPlatformBundlers({}),
+    new DevToolsPluginManager('/'),
+    false
+  );
   devServer['getAvailablePortAsync'] = jest.fn(() => Promise.resolve(3000));
   // Tested in the superclass
   devServer['postStartAsync'] = jest.fn(async () => {});

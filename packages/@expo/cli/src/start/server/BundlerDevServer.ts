@@ -2,6 +2,7 @@ import assert from 'assert';
 import resolveFrom from 'resolve-from';
 
 import { AsyncNgrok } from './AsyncNgrok';
+import DevToolsPluginManager from './DevToolsPluginManager';
 import { DevelopmentSession } from './DevelopmentSession';
 import { CreateURLOptions, UrlCreator } from './UrlCreator';
 import { PlatformBundlers } from './platformBundlers';
@@ -107,6 +108,7 @@ export abstract class BundlerDevServer {
     public projectRoot: string,
     /** A mapping of bundlers to platforms. */
     public platformBundlers: PlatformBundlers,
+    protected readonly devToolsPluginManager: DevToolsPluginManager,
     // TODO: Replace with custom scheme maybe...
     public isDevClient?: boolean
   ) {}

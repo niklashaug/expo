@@ -2,6 +2,7 @@ import { vol } from 'memfs';
 import webpack from 'webpack';
 
 import { BundlerStartOptions } from '../../BundlerDevServer';
+import DevToolsPluginManager from '../../DevToolsPluginManager';
 import { getPlatformBundlers } from '../../platformBundlers';
 import { WebpackBundlerDevServer } from '../WebpackBundlerDevServer';
 
@@ -23,7 +24,12 @@ afterAll(() => {
 });
 
 async function getStartedDevServer(options: Partial<BundlerStartOptions> = {}) {
-  const devServer = new WebpackBundlerDevServer('/', getPlatformBundlers({}), false);
+  const devServer = new WebpackBundlerDevServer(
+    '/',
+    getPlatformBundlers({}),
+    new DevToolsPluginManager('/'),
+    false
+  );
   devServer['getAvailablePortAsync'] = jest.fn(() => Promise.resolve(3000));
   // Tested in the superclass
   devServer['postStartAsync'] = jest.fn(async () => {});
@@ -33,7 +39,12 @@ async function getStartedDevServer(options: Partial<BundlerStartOptions> = {}) {
 
 describe('bundleAsync', () => {
   it(`bundles in dev mode`, async () => {
-    const devServer = new WebpackBundlerDevServer('/', getPlatformBundlers({}), false);
+    const devServer = new WebpackBundlerDevServer(
+      '/',
+      getPlatformBundlers({}),
+      new DevToolsPluginManager('/'),
+      false
+    );
 
     devServer['clearWebProjectCacheAsync'] = jest.fn();
     devServer['loadConfigAsync'] = jest.fn(async () => ({}));
@@ -89,12 +100,20 @@ describe('startAsync', () => {
 describe('getProjectConfigFilePath', () => {
   it(`loads from project`, async () => {
     vol.fromJSON({ 'webpack.config.js': '{}' }, '/');
-    const devServer = new WebpackBundlerDevServer('/', getPlatformBundlers({}));
+    const devServer = new WebpackBundlerDevServer(
+      '/',
+      new DevToolsPluginManager('/'),
+      getPlatformBundlers({})
+    );
     expect(devServer.getProjectConfigFilePath()).toBe('/webpack.config.js');
   });
   it(`cannot load from project`, async () => {
     vol.fromJSON({ 'package.json': '{}' }, '/');
-    const devServer = new WebpackBundlerDevServer('/', getPlatformBundlers({}));
+    const devServer = new WebpackBundlerDevServer(
+      '/',
+      new DevToolsPluginManager('/'),
+      getPlatformBundlers({})
+    );
     expect(devServer.getProjectConfigFilePath()).toBe(null);
   });
 });
