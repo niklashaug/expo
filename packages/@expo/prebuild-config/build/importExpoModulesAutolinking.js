@@ -4,8 +4,6 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.importExpoModulesAutolinking = importExpoModulesAutolinking;
-// NOTE: Keep these types in-sync with expo-modules-autolinking
-
 /**
  * Imports the `expo-modules-autolinking` package installed in the project at the given path.
  */
@@ -16,7 +14,7 @@ function importExpoModulesAutolinking(projectRoot) {
 }
 function tryRequireExpoModulesAutolinking(projectRoot) {
   try {
-    const resolvedAutolinkingPath = require.resolve('expo-modules-autolinking/build/autolinking', {
+    const resolvedAutolinkingPath = require.resolve('expo-modules-autolinking', {
       paths: [projectRoot]
     });
     return require(resolvedAutolinkingPath);
